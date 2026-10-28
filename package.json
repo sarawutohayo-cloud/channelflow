@@ -1,0 +1,56 @@
+{
+  "name": "youtube-multi-uploader",
+  "productName": "ChannelFlow",
+  "main": "electron/main.cjs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,ui -c magenta,cyan \"npm:dev:api\" \"npm:dev:ui\"",
+    "dev:ui": "vite",
+    "dev:api": "node --env-file-if-exists=.env --watch server/server.mjs",
+    "build": "tsc && vite build",
+    "start:api": "node --env-file-if-exists=.env server/server.mjs",
+    "upload:test": "node --env-file-if-exists=.env scripts/upload-test.mjs",
+    "preview": "vite preview",
+    "desktop:build": "tauri build",
+    "windows:build": "npm run build && electron-builder --win nsis --x64",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.8.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "electron-updater": "^6.6.2",
+    "multer": "^2.0.2",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "build": {
+    "appId": "com.channelflow.publisher",
+    "productName": "ChannelFlow",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*", "server/**/*", "package.json"],
+    "extraResources": [
+      { "from": "oauth.env", "to": "oauth.env" },
+      { "from": "resources/bin", "to": "bin" }
+    ],
+    "win": { "target": ["nsis"], "artifactName": "ChannelFlow-Setup-${version}.${ext}" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
+    "publish": [{ "provider": "github", "owner": "sarawutohayo-cloud", "repo": "channelflow" }],
+    "protocols": [{ "name": "ChannelFlow OAuth", "schemes": ["channelflow"] }]
+  }
+}

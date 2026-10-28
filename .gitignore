@@ -1,0 +1,8 @@
+.env
+node_modules/
+dist/
+src-tauri/target/
+release/
+resources/bin/
+oauth.env
+*.zip

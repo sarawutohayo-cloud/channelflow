@@ -1,0 +1,52 @@
+name: Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without v prefix
+        required: true
+        default: 0.1.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Set release version
+        shell: pwsh
+        run: npm version "${{ inputs.version }}" --no-git-tag-version
+      - name: Prepare FFmpeg
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
+          New-Item -ItemType Directory -Force resources/bin | Out-Null
+          Copy-Item (Get-ChildItem ffmpeg -Recurse -Filter ffmpeg.exe | Select-Object -First 1).FullName resources/bin/ffmpeg.exe
+          Copy-Item (Get-ChildItem ffmpeg -Recurse -Filter ffprobe.exe | Select-Object -First 1).FullName resources/bin/ffprobe.exe
+      - name: Prepare OAuth runtime config
+        shell: pwsh
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          "GOOGLE_CLIENT_ID=$env:GOOGLE_CLIENT_ID`nGOOGLE_CLIENT_SECRET=$env:GOOGLE_CLIENT_SECRET`nGOOGLE_REDIRECT_URI=http://127.0.0.1:8787/api/youtube/oauth/callback" | Set-Content oauth.env
+      - run: npm run build
+      - name: Build Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win nsis --x64 --publish never
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ inputs.version }}" release/*.exe release/*.yml release/*.blockmap --title "ChannelFlow v${{ inputs.version }}" --notes "Windows installer and auto-update metadata." --latest
