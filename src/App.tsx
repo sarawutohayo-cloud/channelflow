@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bot, CalendarClock, CheckCircle2, ChevronRight, Clock3, LayoutDashboard, Play, Plus, Settings, Sparkles, Trash2, UploadCloud, Users, WandSparkles } from "lucide-react";
 import { generateMetadata, generateVideoMetadata, type AiMetadata, type AiProvider } from "./api";
-import { deleteYoutubeChannel, getYoutubeStatus, updateChannelLanguage, type YoutubeChannel } from "./youtubeApi";
+import { deleteYoutubeChannel, getYoutubeStatus, startYoutubeAuth, updateChannelLanguage, type YoutubeChannel } from "./youtubeApi";
 import { analyzeAudioTracks, createUploadJobs, getUploadJobs, type AudioTrack, type UploadJob } from "./uploadApi";
 import { apiUrl } from "./apiBase";
 
@@ -79,6 +79,11 @@ export default function App() {
   async function connectYoutube() {
     setYoutubeError("");
     try {
+      if (window.location.protocol === "file:") {
+        const authUrl = await startYoutubeAuth();
+        window.open(authUrl, "_blank");
+        return;
+      }
       const returnTo = window.location.protocol === "tauri:" ? "tauri://localhost/?oauth=success" : window.location.protocol === "file:" ? "channelflow://oauth-success" : window.location.origin + "/?oauth=success";
       window.location.assign(apiUrl(`/api/youtube/auth/redirect?returnTo=${encodeURIComponent(returnTo)}`));
     } catch (error) { setYoutubeError(error instanceof Error ? error.message : "เชื่อมต่อไม่สำเร็จ"); }

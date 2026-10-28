@@ -109,7 +109,7 @@ function createYoutubeAuthUrl(returnTo) {
 }
 
 app.post("/api/youtube/auth/start", (_req, res) => {
-  const authUrl = createYoutubeAuthUrl();
+  const authUrl = createYoutubeAuthUrl("channelflow://oauth-success");
   if (!authUrl) return res.status(503).json({ error: "ยังไม่ได้ตั้งค่า GOOGLE_CLIENT_ID" });
   res.json({ authUrl });
 });
